@@ -11,10 +11,34 @@ const MIN_RMS = 0.015
 const MIN_FREQUENCY = 60
 const MAX_FREQUENCY = 1200
 
+export function midiToFrequency(midi) {
+  return A4_FREQUENCY * 2 ** ((midi - A4_MIDI) / 12)
+}
+
+export function noteToMidi(note) {
+  const match = note.match(/^([A-G]#?)(-?\d+)$/)
+  if (!match) return null
+
+  const noteIndex = NOTE_NAMES.indexOf(match[1])
+  const octave = Number(match[2])
+
+  if (noteIndex < 0 || Number.isNaN(octave)) return null
+  return (octave + 1) * 12 + noteIndex
+}
+
+export function noteToFrequency(note) {
+  const midi = noteToMidi(note)
+  return midi === null ? null : midiToFrequency(midi)
+}
+
+export function centsBetweenFrequencies(sourceFrequency, targetFrequency) {
+  return Math.round(1200 * Math.log2(sourceFrequency / targetFrequency))
+}
+
 export function frequencyToNote(frequency) {
   const midi = Math.round(12 * Math.log2(frequency / A4_FREQUENCY) + A4_MIDI)
-  const noteFrequency = A4_FREQUENCY * 2 ** ((midi - A4_MIDI) / 12)
-  const cents = Math.round(1200 * Math.log2(frequency / noteFrequency))
+  const noteFrequency = midiToFrequency(midi)
+  const cents = centsBetweenFrequencies(frequency, noteFrequency)
   const noteName = NOTE_NAMES[((midi % 12) + 12) % 12]
   const octave = Math.floor(midi / 12) - 1
 
